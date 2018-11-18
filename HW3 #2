@@ -1,0 +1,91 @@
+import numpy as np
+
+
+class CycleGraph:
+    def __init__(self, n_var, n_states, funs):
+        """ Initialize a chordless cycle  factor graph, initialized with uniform marginals
+        :param n_var: The number of variables
+        :param n_states: Number of possible states that each variable can take.
+        :param funs: funs[i] takes the ith and (i+1)%n_var'th variable and returns a real
+        """
+        """"""
+        assert(n_var == len(funs))
+        self.n_var = n_var
+        self.n_states = n_states
+        self.funs = funs
+        self.v_to_a = np.ones([self.n_var, 2, self.n_states])  # backward and forward edges
+        self.a_to_v = np.ones([self.n_var, 2, self.n_states])  # backward and forward edges
+
+    def get_mu_va(self, var, fac):
+        if var == fac:
+            return self.v_to_a[var, 1, :]
+        elif (fac + 1) % self.n_var == var:
+            return self.v_to_a[var, 0, :]
+        else:
+            raise ValueError("var: " + str(var) + " fac:" + str(fac) +
+                             ".  Expected var == fac or (fac+1)%self.n_var == var")
+
+    def get_mu_av(self, fac, var):
+        if var == fac:
+            return self.a_to_v[fac, 0, :]
+        elif (fac + 1) % self.n_var == var:
+            return self.a_to_v[fac, 1, :]
+        else:
+            raise ValueError("var: " + str(var) + " fac:" + str(fac)
+                             + ".  Expected var == fac or (fac+1)%self.n_var == var")
+
+    def set_mu_va(self, var, fac, update):
+        if var == fac:
+            self.v_to_a[var, 1, :] = update
+        elif (fac + 1) % self.n_var == var:
+            self.v_to_a[var, 0, :] = update
+        else:
+            raise ValueError("var: " + str(var) + " fac:" + str(fac) +
+                             ".  Expected var == fac or (fac+1)%self.n_var == var")
+
+    def set_mu_av(self, fac, var, update):
+        if var == fac:
+            self.a_to_v[fac, 0, :] = update
+        elif (fac + 1) % self.n_var == var:
+            self.a_to_v[fac, 1, :] = update
+        else:
+            raise ValueError("var: " + str(var) + " fac:" + str(fac) + ".  Expected var == fac or (fac+1)%self.n_var == var")
+
+    def message_passing(self, v, f, fac_to_var=True):
+        """ Update the chosen message
+        :param v: Variable node
+        :param f: Factor node
+        :param fac_to_var: Indicates direction of the message
+        :return: None, just update the messages
+        """
+        if fac_to_var == True: #update mu_av (a fixed)
+            update = np.zeros(self.n_states)
+            if v == f:
+                for i in range(self.n_states):
+                    for j in range(self.n_states):
+                        update[j] += self.funs[f](j,i) * self.get_mu_va((f+1) % self.n_var,f)[i]
+            elif v == (f+1)%self.n_var:
+                for i in range(self.n_states):
+                    for j in range(self.n_states):
+                        update[j] += self.funs[f](i,j) * self.get_mu_va(f,f)[i]
+            self.set_mu_av(f,v,update)
+        
+        else: #update mu_va (v fixed)
+            update = np.zeros(self.n_states)
+            if v == f:
+                update += self.get_mu_av((f-1) % self.n_var,v)
+            elif v == (f+1)%self.n_var:
+                update += self.get_mu_av(v,v)
+            self.set_mu_va(v,f,update)
+        
+        pass
+
+    def marginal(self, var):
+        """Calculate the marginal of variable var
+        :param var: Variable node
+        :returns: numpy array of length self.n_states
+        """
+        marginal = np.multiply(self.get_mu_av(var, var), self.get_mu_av((var - 1) % self.n_var, var))
+        normalizer = np.sum(marginal)
+        nor_marginal = marginal / normalizer
+        return nor_marginal #np.zeros(self.n_states)

@@ -1,0 +1,62 @@
+import matplotlib.pyplot as plt
+import numpy as np
+# Already defined variables/functions
+# plot_classifier
+# plot_classifier(data, label, w, transform_first=lambda x:x, transform_second=lambda x:x, margin=1)
+# transform_first and transform_second are used to transform the data into the desired feature space
+# margin is a postive value used to color in the region in {x | yw^T Phi(x) <= margin}
+
+
+def gradient(phi, y, lmbda, w): #define the gradient of the hinge loss
+    l = y * np.dot(w, phi)
+    if l < 1:
+        g = -y * phi + lmbda * w
+    else:
+        g = lmbda * w
+    return g
+
+def linear_sgd(data, labels, nepochs=10, gamma=0.025, w0=np.array([0.3, -0.3]), lmbda=0.1):
+    w = w0
+    for epoch in range(nepochs):
+        np_rng_state = np.random.get_state()
+        np.random.shuffle(data)
+        np.random.set_state(np_rng_state)
+        np.random.shuffle(labels)
+        # YOUR CODE GOES HERE!
+        for i in range(len(data)):
+            x = data[i] # the i-1st row
+            y = labels[i]
+            phi = x # linear
+            w = w - gamma * gradient(phi, y, lmbda, w)
+        pass
+    return w
+def sinusoidal_sgd(data, labels, nepochs=10, gamma=0.025, w0=np.array([0.3, -0.3]), lmbda=0.1):
+    w = w0
+    for epoch in range(nepochs):
+        np_rng_state = np.random.get_state()
+        np.random.shuffle(data)
+        np.random.set_state(np_rng_state)
+        np.random.shuffle(labels)
+        # YOUR CODE GOES HERE!
+        for i in range(len(data)):
+            x1 = data[i,0] # the first element of the i-1st row
+            x2 = data[i,1] # the secone element of the i-1st row
+            y = labels[i]
+            phi = np.array([np.sin(x1), np.cos(x2)])
+            w = w - gamma * gradient(phi, y, lmbda, w)
+        pass
+    return w
+###################
+#### The following are variables for the extra part of
+###################
+# points
+print("x_linear.shape =", x_linear.shape)
+print("y_linear.shape =", y_linear.shape)
+print("x_sinusoidal.shape =", x_sinusoidal.shape)
+print("y_sinusoidal.shape =", y_sinusoidal.shape)
+# gamma
+print("gamma={}".format(gamma))
+# n_epochs
+print("n_epochs={}".format(n_epochs))
+# lmbda
+print("lmbda={}".format(lmbda))

@@ -1,0 +1,32 @@
+import matplotlib.pyplot as plt
+import numpy as np
+print("data_X.shape={}".format(data_X.shape))
+print("data_Y.shape={}".format(data_Y.shape))
+print("lambdas={}".format(lambdas))
+
+def ridge_regression(X, Y, lmbda):
+    """
+    Args:
+        X: np array of size n, f
+        Y: np array of size n, 1
+        lmbda: float
+    """
+    # YOUR CODE GOES HERE
+    #raise NotImplementedError()
+    (n,f) = X.shape # size of X
+    M = np.ones((n,f+1)) # nx(f+1) matrix with elements 1
+    M[:, :-1] = X # M = X;1
+    w = np.matmul(np.matmul((np.linalg.pinv(np.matmul(np.transpose(M),M) + lmbda * np.identity(f+1))),np.transpose(M)),Y)    
+    return w
+
+# CODE TO PLOT LINES GOES HERE
+# GRAPHS SHOULD ALWAYS HAVE TITLES, AXIS LABELS
+# AND A LEGEND!
+fig = plt.figure()
+plt.scatter(data_X, data_Y, c='g')
+plt.plot(ridge_regression(data_X, data_Y, 0), label = 'lambda = 0')
+plt.plot(ridge_regression(data_X, data_Y, 10), label = 'lambda = 10')
+plt.plot(ridge_regression(data_X, data_Y, 100), label = 'lambda = 100')
+plt.legend()
+plt.title('Ridge regression with lambdas = [0.0, 10.0, 100.0]')
+plt.show()

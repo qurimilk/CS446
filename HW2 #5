@@ -1,0 +1,132 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def weight_init(fan_in, fan_out):
+    """
+    @param      fan_in   The number of input units
+    @param      fan_out  The number of output units
+    @return     The 2d weight matrix initialized using xavier uniform initializer
+    """
+    # IMPLEMENT ME
+    a = -(6/(fan_in + fan_out))**(1/2)
+    b = (6/(fan_in + fan_out))**(1/2)
+    w = np.random.uniform(a,b,fan_in*fan_out)
+    W = np.reshape(w,(fan_out, fan_in))
+    return W
+    pass
+
+def to_one_hot(y, k):
+    """
+    @brief      Convert numeric class values to one hot vectors
+    @param      y     An array of labels of length N
+    @param      k     Number of classes
+    @return     A 2d array of shape (N x K), where K is the number of classes
+    """
+    # IMPLEMENT ME
+    N = len(y)
+    I = np.zeros((N,k))
+    for i in range(N):
+        j = y[i]
+        I[i, j-1]=1 #j-1 = jth column
+    return I
+    pass
+
+def accuracy(y, y_hat):
+    """
+    @param      y      ground truth labels of shape (N x K)
+    @param      y_hat  Estimated probability distributions of shape (N x K)
+    @return     the accuracy of the prediction as a scalar
+    """
+    # IMPLEMENT ME
+    N = len(y)
+    correct = 0
+    for i in range(N):
+        if np.argmax(y[i]) == np.argmax(y_hat[i]):
+            correct += 1
+    return correct/N
+    pass
+
+class NeuralNetwork:
+    """The Python class that represents our neural network"""
+
+    def __init__(self, d, h, k):
+        """
+        @brief      Initialize weight and bias
+        @param      d     size of the input layer
+        @param      h     size of the hidden layer
+        @param      k     size of the output layer
+        """
+        wb = weight_init(d + 1, h)
+        self.w1 = wb[:, :d]
+        self.b1 = wb[:, d]
+
+        wb = weight_init(h + 1, k)
+        self.w2 = wb[:, :h]
+        self.b2 = wb[:, h]
+
+    def forward(self, x):
+        """
+        @brief      Takes a batch of samples and compute the feedforward output
+        @param      x     A numpy array of shape (N x D)
+        @return     The output at the last layer (N x K)
+        """
+        # IMPLEMENT ME
+        H = np.matmul(x, self.w1.transpose()) + self.b1
+        H = np.maximum(0, H)
+        O = np.matmul(H, self.w2.transpose()) + self.b2
+        return O
+        pass
+    
+    def backprop(self, x, y, y_hat, lr):
+        """
+        @brief      Compute the gradients and update Ws and bs, you don't
+                    need to return anything - instead, please modify
+                    self.w1, self.w2, self.b1, self.b2 as needed
+        @param      x      the features (N x D)
+        @param      y      ground truth label of shape (N x K)
+        @param      y_hat  predictions of shape (N x K)
+        @param      lr     Learning rate
+        """
+        # IMPLEMENT ME  
+        '''
+        H = np.matmul(x, self.w1.transpose()) + self.b1
+        H = np.maximum(0, H)
+        z = np.matmul(H, self.w2.transpose()) + self.b2
+        gradient_sum = np.zeros(np.shape(self.w1))
+        for i in range(len(x)):
+            gradientw1 = np.zeros(np.shape(self.w1))
+            x = x[:, i:i+1]
+            y = y[:, i:i+1]
+            z = z[:, i:i+1]
+            A = np.matmul(x, self.w1.transpose()) + self.b1
+            for d, h in zip(range(np.shape(self.w1)[0]), range(np.shape(self.w1)[1])):
+                if A[h]>0:
+                    dzdw = self.w2[d,h]* x[d]
+                else:
+                    dzdw = 0
+                gradientw1[d,h] = - np.sum(y)*dzdw + np.sum(dzdw*np.exp(z))/np.sum(np.exp(z))
+        gradient_sum += gradientw1
+        gradient_ave = lr*gradient_sum/len(x)
+        self.w1 -= gradient_ave
+        '''
+        pass
+
+def train_one_epoch(model, x, y, test_x, test_y, lr):
+    """
+    @brief      Takes in a model and train it for one epoch.
+    @param      model   The neural network
+    @param      x       The features of training data (N x D)
+    @param      y       The labels of training data (N x K)
+    @param      test_x  The features of testing data (M x D)
+    @param      test_y  The labels of testing data (M x K)
+    @param      lr      Learning rate
+    @return     (train_accuracy, test_accuracy), the training accuracy and
+                testing accuracy of the current epoch
+    """
+    # IMPLEMENT ME
+    pass
+
+# Implement step 6 here
+y = to_one_hot(training_label, 3)
+test_y = to_one_hot(testing_label, 3)
+nn_model = ...

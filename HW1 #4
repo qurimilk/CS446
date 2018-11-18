@@ -1,0 +1,15 @@
+import numpy as np
+def linear_regression(X, Y):
+    """ Performs linear regression on X, Y
+    Args
+        X: np float array of size (number of datapoints, number of features)
+        Y: np float array of size (number of datapoints, 1)
+    Returns:
+        w: np float array of size (number of features + 1, 1)
+    """
+    (n,f) = X.shape # size of X
+    M = np.ones((n,f+1)) # nx(f+1) matrix with elements 1
+    M[:, :-1] =X # M = X;1
+    W = np.matmul(np.matmul(np.linalg.pinv(np.matmul(np.transpose(M),M)),np.transpose(M)),Y)
+    #raise NotImplementedError()
+    return W

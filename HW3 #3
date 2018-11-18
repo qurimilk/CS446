@@ -1,0 +1,76 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+class Stump:
+    def __init__(self, data, labels, weights=None):
+        """
+        Initialize a stump that minimizes a weighted error function
+        Assume we are working over data [-1, 1]^2
+        :param data: numpy array of shape (N, 2)
+        :param labels: numpy array of shape (N,) consisting of values in {-1, 1}
+        :param weights: numpy array of shape (N,)
+        :returns None
+        """
+        self.data = data
+        self.labels = labels
+        self.weights = weights
+        x_avg = [(data[i,0]+data[i+1,0])/2 for i in range(len(data)-1)]
+        data_y = data[data[:,1].argsort()] # sorting data by second column
+        y_avg = [(data_y[i,1]+data_y[i+1,1])/2 for i in range(len(data)-1)]
+        err_x=[]
+        err_y=[]
+        for a in x_avg:
+            err_x.append(np.inner([np.sign(data[i,0]-a) for i in range(len(data))], weights))
+        for b in y_avg:
+            err_y.append(np.inner([np.sign(data[i,1]-b) for i in range(len(data))], weights))
+        if np.min(err_x) < np.min(err_y):
+            self.stump = (0,x_avg[np.argmin(err_x)])
+        else:
+            self.stump = (1,y_avg[np.argmin(err_y)])
+
+
+    def predict(self, data):
+        """
+        Initialize a stump that minimizes a weighted error function
+        Assume we are working over data [-1, 1]^2
+        :param data: numpy array of shape (N, 2)
+        :returns numpy array of shape (N,) containing predictions (in {1,-1})
+        """
+        predictions = np.ones(data.shape[0])
+        for i in range(len(data)):
+            predictions[i] = np.sign(data[i,self.stump[0]]-self.stump[1])
+        return predictions
+
+
+def adaboost(data, labels, n_classifiers):
+    """
+    Run the adaboost algorithm
+    :param data: numpy array of shape (N, 2)
+    :param labels: numpy array of shape (N,), containing values in {1,-1}
+    :param n_classifiers: number of weak classifiers to learn
+    :returns a tuple (classifiers, weights) consisting of a list of stumps and a numpy array of weights for the classifiers
+    """
+    classifiers = []
+    classifier_weights = []
+    x = data
+    y = labels
+    N = len(data)
+    D = np.ones(N)*1/N
+    S = Stump(data, labels, weights=D)
+    f = S.predict(data)
+    #g = np.zeros(N)
+    for i in range(0,n_classifiers):
+        z = np.sum([D[j]*y[j]*f[j] for j in range(0,N)])
+        a = 0.5*np.log((1+z)/(1-z))
+        Zt = np.sum([D[j]*np.exp(-a*y[j]*f[j]) for j in range(0,N)]) # normalizer
+        D = [(D[j]*np.exp(-a*y[j]*f[j]))/Zt for j in range(0,N)] # updata D
+        S = Stump(data, labels, D)
+        f = S.predict(data)
+       # for j in range(0,N):
+            #g[j] += a*f[j] 
+        #f = np.sign(g)
+        classifiers.append(S)
+        classifier_weights.append(a)
+    classifier_weights = np.array(classifier_weights)
+    return classifiers, classifier_weights

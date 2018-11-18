@@ -1,0 +1,87 @@
+import numpy as np
+
+
+def log_joint(initial_probs, transition_probs, emission_probs, zs, ys):
+    """
+    Calculate the log join likelihood of observing a set of states {z_1, ..., z_T} and emissions
+    Args:
+    initial_probs: a numpy array with shape (S,).  initial_probs[i] is the initial probability of state Z_i.
+    transition_probs: a numpy array with shape (S, S).  transition_probs[i,j] is the probability of transitioning from Z_j to Z_i.
+    emission_probs: a numpy array with shape (K, S).  emission_probs[i,j] is the probability of emission Y_i given state Z_j.
+    zs: a numpy int array with shape (T,).  zs[t] is the state (integer in [0,K)) at time t.
+    ys: a numpy int array with shape (T,).  ys[t] is the state (integer in [0,N)) at time t.
+    Returns:
+    The log likelihood P(zs, ys)
+    """
+    T = zs.shape[0]
+    #S = initial_probs.shape[0]
+    log_pi = np.log(initial_probs[zs[0]])
+    sum_t = 0
+    sum_e = 0
+    tran_pb = [np.log(transition_probs[zs[i+1],zs[i]]) for i in range(0,T-1)] #transition_probs[i,j] = P(zi|zj)
+    sum_t = np.sum(tran_pb)
+    emis_pb = [np.log(emission_probs[ys[i],zs[i]]) for i in range(0,T)]
+    sum_e = np.sum(emis_pb)
+    return log_pi + sum_t + sum_e
+    pass
+
+
+
+def max_single_step(previous_log_probs, transition_probs, emission_prob, y):
+    """
+    Args:
+    previous_log_probs: a numpy array with shape (S,).  previous_log_probs[i] is the initial probability of state Z_i at time t-1.
+    transition_probs: a numpy array with shape (S, S).  transition_probs[i,j] is the probability of transitioning from Z_j to Z_i.
+    emission_prob: a numpy array with shape (K, S).  emission_probs[i,j] is the probability of emission Y_i given state Z_j.
+    y: an integer in [0,N), denoting the emission observed
+    Returns:
+    A tuple (pz, path), where
+      pz is a numpy array of shape (S,) containing the log joint of observing each possible z
+      path is a numpy int array of shape (S,), where path[i] is the most likely state that preceded observing z[i]
+    """
+    S = previous_log_probs.shape[0]
+    pz = np.zeros(S)
+    path = np.zeros(S)
+    for i in range(S):
+        candidates = [(previous_log_probs[j] + np.log(transition_probs[i,j]) + np.log(emission_prob[y,i])) for j in range(S)]
+        pz[i] = max(candidates)
+        path[i] = np.argmax(candidates)
+    return (pz, path)
+    pass
+
+def viterbi(initial_probs, transition_probs, emission_probs, ys):
+    """
+    Args:
+      initial_probs: a numpy array with shape (S,).  initial_probs[i] is the initial probability of state Z_i.
+      transition_probs: a numpy array with shape (S, S).  transition_probs[i,j] is the probability of transitioning from Z_j to Z_i.
+      emission_probs: a numpy array with shape (K, S).  emission_probs[i,j] is the probability of emission Y_i given state Z_j.
+      ys: a numpy int array with shape (T,).  zs[t] is the state (integer in [0,N)) at time t.
+    Returns:
+      path is a numpy int array of shape (T), where path[t] is the most likely sequence of states
+    """
+    K = emission_probs.shape[0]
+    S = transition_probs.shape[0]
+    T = ys.shape[0]
+    previous_log_probs = np.zeros(S)
+    Pz = []
+    Path = []
+    x = np.zeros(T)
+    #Pz = np.zeros((S,T))
+    #Path = np.zeros((S,T))
+    for i in range(S):
+        previous_log_probs[i] = np.log(initial_probs[i]) + np.log(emission_probs[ys[0],i])
+    Pz.append(previous_log_probs)
+    Path.append(np.zeros(S))
+    for i in range(1,T):
+        (previous_log_probs, path) = max_single_step(previous_log_probs, transition_probs, emission_probs, ys[i])
+        Pz.append(previous_log_probs)
+        Path.append(path)
+    z = np.argmax(Pz[T-1])
+    x[T-1] = z
+    for t in reversed(range(1,T-1)):  # Follow the backtrack till the first observation
+        a = np.argmax(Pz[t+1])
+        z = Path[t+1][a]
+        x[t] = z
+
+    return x
+    pass

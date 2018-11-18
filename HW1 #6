@@ -1,0 +1,58 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import math as math
+from random import shuffle
+# Already defined variables/functions
+# sigmoid
+print("sigmoid(4.0)={}".format(sigmoid(4.0)))
+# sign
+print("sign(-0.27)={}".format(sign(-0.27)))
+
+
+# L = - math.log(p) + (lmbda/2) * ((np.linalg.norm(w, ord=2))**2)
+
+def sgd(pnts, nepochs=10, alpha=0.025, w0=(0.3, -0.3), lmbda=0.1):
+    w0 = np.array(w0)
+    w=w0
+    for epoch in range(nepochs):
+        shuffle(pnts)
+        # YOUR CODE GOES HERE!
+        for i in range(len(pnts)):
+            x = pnts[i][0]
+            y = pnts[i][1]
+            #n = len(pnts)
+            p = 1/(1 + np.exp(-y * np.dot(w, x)))
+            gradient =  -y * x *(1-p) + lmbda * w
+            w = w - alpha * gradient
+    return w
+
+def sgd_nesterov(pnts, nepochs=10, alpha=0.025, w0=(0.3, -0.3), momentum=0.9, lmbda=0.1):
+    w0 = np.array(w0)
+    w=w0
+    m = len(pnts[0][0])
+    V= np.zeros(m)
+    for epoch in range(nepochs):
+        shuffle(pnts)
+        # YOUR CODE GOES HERE!
+        for i in range(len(pnts)):
+            x = pnts[i][0]
+            y = pnts[i][1]
+            #n = len(pnts)
+            p = 1/(1 + np.exp(-y * np.dot((w - momentum * V), x)))
+            gradient = -y * x *(1-p) + lmbda * w
+            V = momentum * V + (1-momentum) * gradient
+            w = w - alpha * V
+    return w
+###################
+#### The following are variables for the extra part of
+###################
+# points
+print("len(points)={}".format(len(points)))
+# alpha
+print("alpha={}".format(alpha))
+# n_epochs
+print("n_epochs={}".format(n_epochs))
+# momentum
+print("momentum={}".format(momentum))
+# lmbda
+print("lmbda={}".format(lmbda))
